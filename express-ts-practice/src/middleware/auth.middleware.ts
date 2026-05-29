@@ -8,6 +8,7 @@ export interface CustomerRequest extends Request {
   user?: {
     id: number;
     email: string;
+    role: string;
   };
 }
 
@@ -38,6 +39,7 @@ export const protect = (
     const decoded = jwt.verify(token, secretKey) as {
       id: number;
       email: string;
+      role: string;
     };
 
     //attach user
@@ -49,4 +51,17 @@ export const protect = (
       message: 'Invalid Token',
     });
   }
+};
+
+export const adminOnly = (
+  req: CustomerRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (req.user?.role !== 'ADMIN') {
+    return res.status(403).json({
+      message: 'Access denied. Admin only',
+    });
+  }
+  next();
 };
