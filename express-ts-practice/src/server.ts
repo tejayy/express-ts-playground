@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.route';
 import userRoutes from './routes/user.route';
+import noteRoutes from './routes/note.route';
+import { errorHandler } from './middleware/error.middleware';
 
 dotenv.config();
 
@@ -13,7 +15,9 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/note', noteRoutes);
 
+app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.get('/', (req, res) => {
