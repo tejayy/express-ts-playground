@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
+import { prisma } from '../config/prisma';
 
 let notes: any[] = [];
 
@@ -10,66 +11,82 @@ export const createNote = asyncHandler(async (req: Request, res: Response) => {
     throw new Error('Manual test error');
   }
 
-  const newNote = {
-    id: Date.now(),
-    title,
-    content,
-  };
-
-  notes.push(newNote);
+  const note = await prisma.note.create({
+    data: {
+      title,
+      content,
+    },
+  });
 
   res.status(201).json({
     message: 'Note created',
-    note: newNote,
+    note,
   });
 });
 
-export const getNotes = (req: Request, res: Response) => {
+export const getNotes = asyncHandler(async (req: Request, res: Response) => {
+  const notes = await prisma.note.findMany();
+
   res.status(200).json({
     total: notes.length,
     notes,
   });
-};
+});
 
-export const getSingleNote = (req: Request, res: Response) => {
-  const noteId = Number(req.params.id);
+export const getSingleNote = asyncHandler(
+  async (req: Request, res: Response) => {
+    const noteId = Number(req.params.id);
 
-  const note = notes.find((note) => note.id === noteId);
-  if (!note) {
-    return res.status(404).json({
-      message: 'Note not found',
+    const note = await prisma.note.findUnique({
+      where: {
+        id: noteId,
+      },
     });
-  }
+    if (!note) {
+      return res.status(404).json({
+        message: 'Note not found',
+      });
+    }
 
-  res.status(200).json(note);
-};
+    res.status(200).json(note);
+  },
+);
 
-export const updateNote = (req: Request, res: Response) => {
+export const updateNote = asyncHandler(async (req: Request, res: Response) => {
   const noteId = Number(req.params.id);
-
-  const note = notes.find((note) => note.id === noteId);
-
-  if (!note) {
-    return res.status(404).json({
-      message: 'Note not found',
-    });
-  }
 
   const { title, content } = req.body;
 
-  note.title = title || note.title;
-  note.content = content || note.content;
+  const note = await prisma.note.update({
+    where: {
+      id: noteId,
+    },
+    data: {
+      title,
+      content,
+    },
+  });
+
+  if (!note) {
+    return res.status(404).json({
+      message: 'Note not found',
+    });
+  }
 
   res.status(200).json({
     message: 'Note updated',
     note,
   });
-};
+});
 
-export const deleteNote = (req: Request, res: Response) => {
+export const deleteNote = asyncHandler(async (req: Request, res: Response) => {
   const noteId = Number(req.params.id);
 
-  const noteExists = notes.find((note) => note.id === noteId);
+  const noteExists = await prisma.note.delete({
+    where: {
+      id: noteId,
+    },
+  });
 
   if (!noteExists) {
     return res.status(404).json({
@@ -77,9 +94,7 @@ export const deleteNote = (req: Request, res: Response) => {
     });
   }
 
-  notes = notes.filter((note) => note.id !== noteId);
-
   res.status(200).json({
     message: 'Note Deleted',
   });
-};
+});
