@@ -1,37 +1,47 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { prisma } from '../config/prisma';
+import { CustomerRequest } from '../middleware/auth.middleware';
 
 let notes: any[] = [];
 
-export const createNote = asyncHandler(async (req: Request, res: Response) => {
-  const { title, content } = req.body;
+export const createNote = asyncHandler(
+  async (req: CustomerRequest, res: Response) => {
+    const { title, content } = req.body;
 
-  if (title === 'error') {
-    throw new Error('Manual test error');
-  }
+    if (title === 'error') {
+      throw new Error('Manual test error');
+    }
 
-  const note = await prisma.note.create({
-    data: {
-      title,
-      content,
-    },
-  });
+    const note = await prisma.note.create({
+      data: {
+        title,
+        content,
+        userId: req.user!.id,
+      },
+    });
 
-  res.status(201).json({
-    message: 'Note created',
-    note,
-  });
-});
+    res.status(201).json({
+      message: 'Note created',
+      note,
+    });
+  },
+);
 
-export const getNotes = asyncHandler(async (req: Request, res: Response) => {
-  const notes = await prisma.note.findMany();
+export const getNotes = asyncHandler(
+  async (req: CustomerRequest, res: Response) => {
+    const notes = await prisma.note.findMany({
+      where: {
+        userId: req.user!.id,
+      },
+    });
 
-  res.status(200).json({
-    total: notes.length,
-    notes,
-  });
-});
+    res.status(200).json({
+      total: notes.length,
+      notes,
+    });
+  },
+);
 
 export const getSingleNote = asyncHandler(
   async (req: Request, res: Response) => {

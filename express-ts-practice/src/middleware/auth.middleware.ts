@@ -5,7 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 export interface CustomerRequest extends Request {
-  user?: any;
+  user?: {
+    id: number;
+    email: string;
+  };
 }
 
 export const protect = (
@@ -32,7 +35,10 @@ export const protect = (
       });
     }
     //verfiy Token
-    const decoded = jwt.verify(token, secretKey);
+    const decoded = jwt.verify(token, secretKey) as {
+      id: number;
+      email: string;
+    };
 
     //attach user
     req.user = decoded;
