@@ -11,7 +11,7 @@ const users: any[] = [];
 
 export const signup = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const {  email, password } = req.body;
 
     // check existing user
     const existingUser = await prisma.user.findUnique({
@@ -79,6 +79,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       {
         id: user.id,
         email: user.email,
+        role: user.role,
       },
       process.env.JWT_SECRET!,
       {

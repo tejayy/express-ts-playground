@@ -8,6 +8,7 @@ export interface CustomerRequest extends Request {
   user?: {
     id: number;
     email: string;
+    role: string;
   };
 }
 
@@ -17,15 +18,16 @@ export const protect = (
   next: NextFunction,
 ) => {
   try {
-    //get token
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
     //Check Token
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         message: 'No Token Provided',
       });
     }
+
+    const token = authHeader.split(' ')[1];
 
     const secretKey = process.env.JWT_SECRET;
 
@@ -38,6 +40,7 @@ export const protect = (
     const decoded = jwt.verify(token, secretKey) as {
       id: number;
       email: string;
+      role: string;
     };
 
     //attach user
@@ -49,4 +52,17 @@ export const protect = (
       message: 'Invalid Token',
     });
   }
+};
+
+export const adminOnly = (
+  req: CustomerRequest,
+  res: Response,
+  next: NextFunction,
+) => {
+  if (req.user?.role !== 'ADMIN') {
+    return res.status(403).json({
+      message: 'Access denied. Admin only',
+    });
+  }
+  next();
 };

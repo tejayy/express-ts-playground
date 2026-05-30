@@ -16,6 +16,7 @@ model User {
   id       Int    @id @default(autoincrement())
   email    String @unique
   password String
+  role     String @default("USER")
 
   note Note[]
 
@@ -23,9 +24,12 @@ model User {
 }
 
 model Note {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String
+  id      Int    @id @default(autoincrement())
+  title   String
+  content String
+
+  completed Boolean @default(false)
+
   createdAt DateTime @default(now())
   user      User?    @relation(fields: [userId], references: [id])
   userId    Int?
