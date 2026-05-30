@@ -18,15 +18,16 @@ export const protect = (
   next: NextFunction,
 ) => {
   try {
-    //get token
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
     //Check Token
-    if (!token) {
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
       return res.status(401).json({
         message: 'No Token Provided',
       });
     }
+
+    const token = authHeader.split(' ')[1];
 
     const secretKey = process.env.JWT_SECRET;
 
