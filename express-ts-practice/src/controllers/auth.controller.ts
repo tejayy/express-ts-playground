@@ -2,17 +2,23 @@ import { Response, Request } from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import { prisma } from '../config/prisma';
+import { asyncHandler } from '../utils/asyncHandler';
 
 dotenv.config();
 
 const users: any[] = [];
 
-export const signup = async (req: Request, res: Response) => {
+export const signup = asyncHandler(async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
+    const {  email, password } = req.body;
 
     // check existing user
-    const existingUser = users.find((user) => user.email === email);
+    const existingUser = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
     if (existingUser) {
       return res.status(400).json({
@@ -24,31 +30,34 @@ export const signup = async (req: Request, res: Response) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     //create user
-    const newUser = {
-      id: Date.now(),
-      email,
-      password: hashedPassword,
-    };
-
-    users.push(newUser);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+      },
+    });
 
     res.status(201).json({
       message: 'Signup Successful',
-      user: newUser,
+      user,
     });
   } catch (error) {
     res.status(500).json({
       message: 'Server Error',
     });
   }
-};
+});
 
-export const login = async (req: Request, res: Response) => {
+export const login = asyncHandler(async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
     //find user
-    const user = users.find((user) => user.email === email);
+    const user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
 
     if (!user) {
       return res.status(404).json({
@@ -70,6 +79,7 @@ export const login = async (req: Request, res: Response) => {
       {
         id: user.id,
         email: user.email,
+        role: user.role,
       },
       process.env.JWT_SECRET!,
       {
@@ -86,4 +96,4 @@ export const login = async (req: Request, res: Response) => {
       message: 'Server Error',
     });
   }
-};
+});
